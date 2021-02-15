@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use bevy_ecs::{WorldBuilder, IntoSystem, Stage};
 
 mod map;
 mod tile;
@@ -18,7 +19,10 @@ mod prelude {
     pub const SCREEN_HEIGHT: u8 = 50;
     pub const SCREEN_WIDTH: u8 = 80;
 
-    pub use legion::*;
+    pub use bevy_ecs::prelude as bevy;
+    pub use bevy_ecs::prelude::*;
+
+    pub use legion::systems::*;
     pub use legion::world::SubWorld;
     pub use legion::systems::CommandBuffer;
 }
@@ -28,9 +32,9 @@ struct State {
     SCREEN_HEIGHT: u8,
     SCREEN_WIDTH: u8,
     pub map: Map,
-    ecs: World,
-    resources: Resources,
-    systems: Schedule
+    world: bevy::World,
+    resources: bevy::Resources,
+    schedule: bevy::Schedule
 
 }
 
@@ -111,34 +115,39 @@ impl Mode {
 }
 
 impl State {
-    fn build_scheduler() -> Schedule {
-        Schedule::builder()
-            .add_system(map_render::map_render_system())
-            .add_system(ball_render::ball_render_system())
-            .add_system(turn::turn_system())
-            .build()
+    fn build_schedule() -> bevy::Schedule {
+        let mut schedule: bevy::Schedule = Default::default();
+        schedule.add_stage("main", SystemStage::parallel());
+        schedule.add_system_to_stage("main", map_render::map_render_b.system());
+        schedule
     }
 
     fn new() -> Self {
+        let mut world: bevy::World = Default::default();
+        let mut resources: bevy::Resources = Default::default();
+        let mut schedule: bevy::Schedule = State::build_schedule();
+
         let mut map = Map::load_map(
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
             "src/map1.txt"
         ).unwrap();
         let ball = Ball::new(&map.tee);
-        let mut ecs = World::default();
-        let mut res = Resources::default();
-        res.insert(map.clone());
-        res.insert(Mode::default());
-        &ecs.push((ball,));
+
+        resources.insert(map.clone());
+        resources.insert(Mode::default());
+        world.spawn((ball,));
+
+        schedule.initialize(&mut world, &mut resources);
+
         Self {
             message: "ON TOUR!".to_string(),
             SCREEN_WIDTH,
             SCREEN_HEIGHT,
             map,
-            ecs,
-            resources: res,
-            systems: State::build_scheduler()
+            world,
+            resources,
+            schedule
         }
     }
 
@@ -225,7 +234,7 @@ impl GameState for State {
         //     },
         // }
         self.resources.insert(ctx.key);
-        self.systems.execute(&mut self.ecs, &mut self.resources);
+        self.schedule.run(&mut self.world, &mut self.resources);
         render_draw_buffer(ctx).expect("Render error");
     }
 }
