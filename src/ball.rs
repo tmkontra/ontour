@@ -58,14 +58,10 @@ impl Ball {
         self.velocity <= 0.
     }
 
-    pub fn tick(&mut self, ctx: &mut BTerm) {
+    pub fn tick(&mut self) {
         if self.velocity > 0. {
-            self.frame_time += ctx.frame_time_ms;
-            if self.frame_time > FRAME_DURATION / self.velocity {
-                self.frame_time = 0.;
-                self.motion();
-                self.decel();
-            }
+            self.motion();
+            self.decel();
         }
     }
 }

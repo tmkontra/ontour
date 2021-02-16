@@ -14,6 +14,7 @@ mod prelude {
     pub use crate::systems::*;
     pub use crate::Mode;
     pub use crate::Swing;
+    pub use crate::Aim;
 
     pub const FRAME_DURATION: f32 = 300.;
     pub const SCREEN_HEIGHT: u8 = 50;
@@ -38,6 +39,7 @@ struct State {
 
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Aim {
     degrees: f32
 }
@@ -64,7 +66,7 @@ impl Aim {
     }
 }
 
-#[derive(Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Swing {
     Start(f32),
     Power(f32, f32),
@@ -81,14 +83,17 @@ impl Swing {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct Travel {
 
 }
 
+#[derive(Copy, Clone, Debug)]
 struct Finished {
 
 }
 
+#[derive(Copy, Clone, Debug)]
 pub enum Mode {
     Aiming(Aim),
     Swinging(Swing),
@@ -118,7 +123,10 @@ impl State {
     fn build_schedule() -> bevy::Schedule {
         let mut schedule: bevy::Schedule = Default::default();
         schedule.add_stage("main", SystemStage::parallel());
-        schedule.add_system_to_stage("main", map_render::map_render_b.system());
+        schedule.add_system_to_stage("main", turn::turn.system());
+        schedule.add_system_to_stage("main", map_render::map_render.system());
+        schedule.add_system_to_stage("main", ball_render::ball_render.system());
+        schedule.add_system_to_stage("main", ui_render::render_ui.system());
         schedule
     }
 
@@ -150,89 +158,11 @@ impl State {
             schedule
         }
     }
-
-    fn crosshair(origin: Point, degrees: &f32) -> Point {
-        let radius = 20.;
-        let rads = (*degrees + 90.).to_radians();
-        let dx = rads.cos() * radius;
-        let dy = -1. * rads.sin() * radius;
-        let dir = Point::new(dx.round() as i32, dy.round() as i32);
-        origin + dir
-    }
-
-    fn handle_swing(&self, swing: Swing) -> Option<Swing> {
-        match swing {
-            Swing::Power(deg, power) => {
-                let new_power = if power < 100. as f32 {
-                    power + 1.
-                } else { power };
-                if new_power >= 100. {
-                    Some(Swing::Accuracy(deg, new_power, 0.))
-                } else {
-                    Some(Swing::Power(deg, new_power))
-                }
-            },
-            _ => None
-        }
-    }
-
-    fn render_swing(&self, swing: Swing, ctx: &mut BTerm) {
-        let p = Point::new(27, 30);
-        match swing {
-            Swing::Start(deg) => {
-                ctx.print(2, self.SCREEN_HEIGHT - 3, "[Start] Aim, Press Space to Start Swing!");
-                let coord  = State::crosshair(p, swing.direction());
-                let bg = self.map.bg(coord);
-                ctx.set(coord.x, coord.y, WHITE, bg, 9);
-            },
-            Swing::Power(deg, pow) => {
-                ctx.print(2, self.SCREEN_HEIGHT - 3, "[Power] Aim, Press Space to Start Swing!");
-                let coord  = State::crosshair(p, swing.direction());
-                let bg = self.map.bg(coord);
-                ctx.set(coord.x, coord.y, WHITE, bg, 9);
-                ctx.draw_bar_horizontal(2, self.SCREEN_HEIGHT - 10,
-                                        51,
-                                        pow as i32,
-                                        100,
-                                        RED, BLACK);
-            },
-            Swing::Accuracy(_, _, _) => {
-                ctx.print(2, self.SCREEN_HEIGHT - 3, "[Acc] Aim, Press Space to Start Swing!");
-                let coord  = State::crosshair(p, swing.direction());
-                let bg = self.map.bg(coord);
-                ctx.set(coord.x, coord.y, WHITE, bg, 9);
-            },
-        }
-    }
 }
 
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
         ctx.cls();
-        // match &self.mode {
-        //     Mode::Aiming(aim) => {
-        //         ctx.print(2, self.SCREEN_HEIGHT - 3, "Aiming");
-        //         let new_aim = aim.aim(ctx.key);
-        //         self.mode = Mode::Aiming(Aim{ degrees: new_aim})
-        //     },
-        //     Mode::Swinging(swing) => {
-        //         let new_swing = self.handle_swing(swing.clone());
-        //         self.render_swing(swing.clone(), ctx);
-        //         if let Some(new_swing) = new_swing {
-        //             self.mode = Mode::Swinging(new_swing);
-        //         }
-        //     },
-        //     Mode::Traveling(_) => {
-        //         ctx.print(
-        //             2,
-        //             self.SCREEN_HEIGHT - 3,
-        //             format!("Ball is Traveling {}", 100.)
-        //         )
-        //     },
-        //     Mode::Finished => {
-        //         ctx.print(2, self.SCREEN_HEIGHT - 3, "Finishing Turn")
-        //     },
-        // }
         self.resources.insert(ctx.key);
         self.schedule.run(&mut self.world, &mut self.resources);
         render_draw_buffer(ctx).expect("Render error");
