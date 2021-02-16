@@ -1,8 +1,8 @@
 use crate::prelude::*;
 
-pub fn turn(key: Res<Option<VirtualKeyCode>>,
-            mut mode: ResMut<Mode>,
-            mut balls: Query<&mut Ball>
+pub fn turn_handler(key: Res<Option<VirtualKeyCode>>,
+                    mut mode: ResMut<Mode>,
+                    mut balls: Query<&mut Ball>
 ) {
     let next = mode.next();
     let new_mode = match (*mode, &next, *key) {

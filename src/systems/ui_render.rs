@@ -43,8 +43,13 @@ pub fn render_ui(mut mode: ResMut<Mode>,
             let new_aim = aim.aim(*key);
             for &ball in balls.iter() {
                 let coord  = crosshair(ball.tile_position(), &new_aim);
-                let bg = map.bg(coord);
-                ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
+                if map.in_bounds(coord) {
+                    let bg = map.bg(coord);
+                    ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
+                } else {
+                    let arr = map.intersection(ball.tile_position(), coord);
+                    ctx.set(arr, ColorPair::new(RED, BLACK), 30);
+                }
             }
             *mode = Mode::Aiming(Aim { degrees: new_aim });
         },

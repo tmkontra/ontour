@@ -114,7 +114,8 @@ impl Mode {
         match self {
             Mode::Aiming(Aim { degrees }) => Mode::start_swing(degrees.clone()),
             Mode::Swinging(_) => Mode::Traveling(Travel{}),
-            _ => Mode::Finished
+            Mode::Traveling(_) => Mode::Finished,
+            Mode::Finished => Mode::Aiming(Aim::new())
         }
     }
 }
@@ -123,7 +124,7 @@ impl State {
     fn build_schedule() -> bevy::Schedule {
         let mut schedule: bevy::Schedule = Default::default();
         schedule.add_stage("main", SystemStage::parallel());
-        schedule.add_system_to_stage("main", turn::turn.system());
+        schedule.add_system_to_stage("main", turn::turn_handler.system());
         schedule.add_system_to_stage("main", map_render::map_render.system());
         schedule.add_system_to_stage("main", ball_render::ball_render.system());
         schedule.add_system_to_stage("main", ui_render::render_ui.system());
