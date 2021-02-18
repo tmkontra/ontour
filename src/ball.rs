@@ -49,7 +49,7 @@ impl Ball {
         println!("dird: {:?}", self.direction + 90.);
         let rads = (self.direction + 90.).to_radians();
         let dx = rads.cos();
-        let dy = -1. * rads.sin().ceil();
+        let dy = -1. * rads.sin();
         println!("{:?}, {:?}", dx, dy);
         self.mv(dx, dy);
     }

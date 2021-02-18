@@ -12,9 +12,10 @@ mod prelude {
     pub use crate::ball::*;
     pub use crate::tile::*;
     pub use crate::systems::*;
-    pub use crate::Mode;
+    pub use crate::TurnStage;
     pub use crate::Swing;
     pub use crate::Aim;
+    pub use crate::AppState;
 
     pub const FRAME_DURATION: f32 = 300.;
     pub const SCREEN_HEIGHT: u8 = 50;
@@ -37,6 +38,12 @@ struct State {
     resources: bevy::Resources,
     schedule: bevy::Schedule
 
+}
+
+#[derive(Copy, Clone, Debug)]
+pub enum AppState {
+    Menu,
+    Playing
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -94,28 +101,28 @@ struct Finished {
 }
 
 #[derive(Copy, Clone, Debug)]
-pub enum Mode {
+pub enum TurnStage {
     Aiming(Aim),
     Swinging(Swing),
     Traveling(Travel),
     Finished
 }
 
-impl Mode {
-    pub fn default() -> Mode {
-        Mode::Aiming(Aim::new())
+impl TurnStage {
+    pub fn default() -> TurnStage {
+        TurnStage::Aiming(Aim::new())
     }
 
-    fn start_swing(degrees: f32) -> Mode {
-        Mode::Swinging(Swing::Start(degrees))
+    fn start_swing(degrees: f32) -> TurnStage {
+        TurnStage::Swinging(Swing::Start(degrees))
     }
 
-    pub fn next(&self) -> Mode {
+    pub fn next(&self) -> TurnStage {
         match self {
-            Mode::Aiming(Aim { degrees }) => Mode::start_swing(degrees.clone()),
-            Mode::Swinging(_) => Mode::Traveling(Travel{}),
-            Mode::Traveling(_) => Mode::Finished,
-            Mode::Finished => Mode::Aiming(Aim::new())
+            TurnStage::Aiming(Aim { degrees }) => TurnStage::start_swing(degrees.clone()),
+            TurnStage::Swinging(_) => TurnStage::Traveling(Travel{}),
+            TurnStage::Traveling(_) => TurnStage::Finished,
+            TurnStage::Finished => TurnStage::Aiming(Aim::new())
         }
     }
 }
@@ -123,11 +130,28 @@ impl Mode {
 impl State {
     fn build_schedule() -> bevy::Schedule {
         let mut schedule: bevy::Schedule = Default::default();
-        schedule.add_stage("main", SystemStage::parallel());
-        schedule.add_system_to_stage("main", turn::turn_handler.system());
-        schedule.add_system_to_stage("main", map_render::map_render.system());
-        schedule.add_system_to_stage("main", ball_render::ball_render.system());
-        schedule.add_system_to_stage("main", ui_render::render_ui.system());
+        let mut stateStage = StateStage::<AppState>::default();
+        stateStage.on_state_update(
+            AppState::Menu,
+            menu_system::menu.system()
+        );
+        stateStage.on_state_update(
+            AppState::Playing,
+            map_render::map_render.system()
+        );
+        stateStage.on_state_update(
+            AppState::Playing,
+            turn_handler::turn_handler.system()
+        );
+        stateStage.on_state_update(
+            AppState::Playing,
+            ball_render::ball_render.system()
+        );
+        stateStage.on_state_update(
+            AppState::Playing,
+            ui_render::render_ui.system()
+        );
+        schedule.add_stage("main", stateStage);
         schedule
     }
 
@@ -143,8 +167,9 @@ impl State {
         ).unwrap();
         let ball = Ball::new(&map.tee);
 
+        resources.insert(bevy::State::new(AppState::Menu));
         resources.insert(map.clone());
-        resources.insert(Mode::default());
+        resources.insert(TurnStage::default());
         world.spawn((ball,));
 
         schedule.initialize(&mut world, &mut resources);
