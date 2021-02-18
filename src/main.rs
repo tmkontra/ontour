@@ -15,11 +15,9 @@ mod prelude {
     pub use crate::AppState;
     pub use crate::Swing;
     pub use crate::TurnStage;
+    pub use crate::Club;
+    pub use crate::Window;
     pub use bracket_lib::prelude::*;
-
-    pub const FRAME_DURATION: f32 = 300.;
-    pub const SCREEN_HEIGHT: u8 = 50;
-    pub const SCREEN_WIDTH: u8 = 80;
 
     pub use bevy_ecs::prelude as bevy;
     pub use bevy_ecs::prelude::*;
@@ -30,13 +28,27 @@ mod prelude {
 }
 
 struct State {
-    pub message: String,
-    SCREEN_HEIGHT: u8,
-    SCREEN_WIDTH: u8,
-    pub map: Map,
+    pub title: String,
     world: bevy::World,
     resources: bevy::Resources,
     schedule: bevy::Schedule,
+}
+
+pub struct Window {
+    pub height: u8,
+    pub width: u8,
+}
+
+impl Window {
+    const SCREEN_HEIGHT: u8 = 50;
+    const SCREEN_WIDTH: u8 = 80;
+
+    pub fn new() -> Self {
+        Self {
+            height: Window::SCREEN_HEIGHT,
+            width: Window::SCREEN_WIDTH,
+        }
+    }
 }
 
 #[derive(Copy, Clone, Debug)]
@@ -67,8 +79,24 @@ impl Aim {
 }
 
 #[derive(Copy, Clone, Debug)]
+pub struct Club {
+    id: u32,
+    pub name: &'static str
+    // loft, speed, accuracy
+}
+
+impl Club {
+    const DRIVER: Club = Club { id: 1, name: "Driver" };
+    const PUTTER: Club = Club { id: 2, name: "Putter" };
+
+    pub fn default() -> Self {
+        Club::DRIVER
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
 pub enum Swing {
-    Start(f32),
+    Start,
     Power(f32, f32),
     Accuracy(f32, f32, f32),
 }
@@ -76,7 +104,7 @@ pub enum Swing {
 impl Swing {
     pub fn direction(&self) -> &f32 {
         match self {
-            Swing::Start(deg) => deg,
+            Swing::Start => &0.,
             Swing::Power(deg, _) => deg,
             Swing::Accuracy(deg, _, _) => deg,
         }
@@ -91,27 +119,34 @@ struct Finished {}
 
 #[derive(Copy, Clone, Debug)]
 pub enum TurnStage {
-    Aiming(Aim),
-    Swinging(Swing),
+    ClubSelection(Club),
+    Aiming(Aim, Club),
+    Swinging(Swing, Aim, Club),
     Traveling(Travel),
     Finished,
 }
 
 impl TurnStage {
-    pub fn default() -> TurnStage {
-        TurnStage::Aiming(Aim::new())
+    pub fn start() -> TurnStage {
+        TurnStage::ClubSelection(Club::default())
     }
 
-    fn start_swing(degrees: f32) -> TurnStage {
-        TurnStage::Swinging(Swing::Start(degrees))
+    fn start_swing(aim: Aim, club: Club) -> TurnStage {
+        TurnStage::Swinging(Swing::Start, aim, club)
     }
 
     pub fn next(&self) -> TurnStage {
         match self {
-            TurnStage::Aiming(Aim { degrees }) => TurnStage::start_swing(degrees.clone()),
-            TurnStage::Swinging(_) => TurnStage::Traveling(Travel {}),
-            TurnStage::Traveling(_) => TurnStage::Finished,
-            TurnStage::Finished => TurnStage::Aiming(Aim::new()),
+            TurnStage::ClubSelection(club) =>
+                TurnStage::Aiming(Aim::new(), club.clone()),
+            TurnStage::Aiming(aim, club) =>
+                TurnStage::start_swing(aim.clone(), club.clone()),
+            TurnStage::Swinging(_, _, _) =>
+                TurnStage::Traveling(Travel {}),
+            TurnStage::Traveling(_) =>
+                TurnStage::Finished,
+            TurnStage::Finished =>
+                TurnStage::start(),
         }
     }
 }
@@ -134,21 +169,21 @@ impl State {
         let mut resources: bevy::Resources = Default::default();
         let mut schedule: bevy::Schedule = State::build_schedule();
 
-        let mut map = Map::load_map(SCREEN_WIDTH, SCREEN_HEIGHT, "src/map1.txt").unwrap();
+        let window = Window::new();
+        let mut map = Map::load_map(window.width, window.height, "src/map1.txt").unwrap();
         let ball = Ball::new(&map.tee);
 
+
         resources.insert(bevy::State::new(AppState::Menu));
-        resources.insert(map.clone());
-        resources.insert(TurnStage::default());
+        resources.insert(map);
+        resources.insert(TurnStage::start());
+        resources.insert(window);
         world.spawn((ball,));
 
         schedule.initialize(&mut world, &mut resources);
 
         Self {
-            message: "ON TOUR!".to_string(),
-            SCREEN_WIDTH,
-            SCREEN_HEIGHT,
-            map,
+            title: "ON TOUR!".to_string(),
             world,
             resources,
             schedule,

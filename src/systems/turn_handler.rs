@@ -6,24 +6,24 @@ pub fn turn_handler(
     mut balls: Query<&mut Ball>,
 ) {
     let updatedStage: TurnStage = match *turnStage {
-        TurnStage::Aiming(aim) => {
+        TurnStage::Aiming(aim, club) => {
             let new_aim = aim.aim(*key);
-            TurnStage::Aiming(Aim { degrees: new_aim })
+            TurnStage::Aiming(Aim { degrees: new_aim }, club)
         }
-        TurnStage::Swinging(swing) => {
+        TurnStage::Swinging(swing, aim, club) => {
             let new_swing = handle_swing(swing.clone());
             if let Some(new_swing) = new_swing {
-                TurnStage::Swinging(new_swing)
+                TurnStage::Swinging(new_swing, aim, club)
             } else {
-                TurnStage::Swinging(swing)
+                TurnStage::Swinging(swing, aim, club)
             }
         }
         stage => stage,
     };
     let newStage = match (updatedStage, *key) {
-        (TurnStage::Swinging(swing), Some(VirtualKeyCode::Space)) => match swing {
-            Swing::Start(deg) => Some(TurnStage::Swinging(Swing::Power(deg, 0.))),
-            Swing::Power(deg, pow) => Some(TurnStage::Swinging(Swing::Accuracy(deg, pow, 1.0))),
+        (TurnStage::Swinging(swing, aim, club), Some(VirtualKeyCode::Space)) => match swing {
+            Swing::Start => Some(TurnStage::Swinging(Swing::Power(aim.degrees, 0.), aim, club)),
+            Swing::Power(deg, pow) => Some(TurnStage::Swinging(Swing::Accuracy(aim.degrees, pow, 1.0), aim, club)),
             Swing::Accuracy(deg, pow, acc) => {
                 for mut ball in balls.iter_mut() {
                     ball.direction = deg;

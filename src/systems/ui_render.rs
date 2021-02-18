@@ -5,13 +5,14 @@ pub fn render_ui(
     map: Res<Map>,
     key: Res<Option<VirtualKeyCode>>,
     balls: Query<&Ball>,
+    window: Res<Window>
 ) {
     let mut ctx = DrawBatch::new();
 
     let mut render_swing = |ball: &Ball, swing: Swing| match swing {
-        Swing::Start(deg) => {
+        Swing::Start => {
             ctx.print(
-                Point::new(2, SCREEN_HEIGHT - 3),
+                Point::new(2, window.height - 3),
                 "[Start] Aim, Press Space to Start Swing!",
             );
             let coord = crosshair_coord(ball.tile_position(), swing.direction());
@@ -25,7 +26,7 @@ pub fn render_ui(
         }
         Swing::Power(deg, pow) => {
             ctx.print(
-                Point::new(2, SCREEN_HEIGHT - 3),
+                Point::new(2, window.height - 3),
                 "[Power] Aim, Press Space to Start Swing!",
             );
             let coord = crosshair_coord(ball.tile_position(), swing.direction());
@@ -37,7 +38,7 @@ pub fn render_ui(
                 ctx.set(arr, ColorPair::new(RED, BLACK), 30);
             }
             ctx.bar_horizontal(
-                Point::new(2, SCREEN_HEIGHT - 10),
+                Point::new(2, window.height - 10),
                 51,
                 pow as i32,
                 100,
@@ -46,7 +47,7 @@ pub fn render_ui(
         }
         Swing::Accuracy(_, _, _) => {
             ctx.print(
-                Point::new(2, SCREEN_HEIGHT - 3),
+                Point::new(2, window.height - 3),
                 "[Acc] Aim, Press Space to Start Swing!",
             );
             let coord = crosshair_coord(ball.tile_position(), swing.direction());
@@ -60,7 +61,13 @@ pub fn render_ui(
         }
     };
     match *turnStage {
-        TurnStage::Aiming(Aim { degrees }) => {
+        TurnStage::ClubSelection(club) => {
+            ctx.print(
+                Point::new(2, window.height - 3),
+                format!("Club selected: {}", club.name)
+            );
+        }
+        TurnStage::Aiming(Aim { degrees }, _) => {
             for ball in balls.iter() {
                 let coord = crosshair_coord(ball.tile_position(), &degrees);
                 if map.in_bounds(coord) {
@@ -71,9 +78,9 @@ pub fn render_ui(
                     ctx.set(arr, ColorPair::new(RED, BLACK), 30);
                 }
             }
-            ctx.print(Point::new(2, SCREEN_HEIGHT - 3), "Aiming");
+            ctx.print(Point::new(2, window.height - 3), "Aiming");
         }
-        TurnStage::Swinging(swing) => {
+        TurnStage::Swinging(swing, _, _) => {
             for ball in balls.iter() {
                 render_swing(ball, swing.clone());
             }
@@ -81,13 +88,13 @@ pub fn render_ui(
         TurnStage::Traveling(_) => {
             for ball in balls.iter() {
                 ctx.print(
-                    Point::new(2, SCREEN_HEIGHT - 3),
+                    Point::new(2, window.height - 3),
                     format!("Ball is Traveling {}", ball.velocity),
                 );
             }
         }
         TurnStage::Finished => {
-            ctx.print(Point::new(2, SCREEN_HEIGHT - 3), "Finishing Turn");
+            ctx.print(Point::new(2, window.height - 3), "Finishing Turn");
         }
     }
 
