@@ -6,7 +6,7 @@ pub struct Ball {
     y: f32,
     pub velocity: f32,
     pub direction: f32,
-    frame_time: f32
+    frame_time: f32,
 }
 
 impl Ball {
@@ -16,7 +16,7 @@ impl Ball {
             y: position.y as f32,
             velocity: 0.,
             direction: 0.,
-            frame_time: 0.
+            frame_time: 0.,
         }
     }
 
@@ -26,16 +26,8 @@ impl Ball {
 
     fn decel(&mut self) {
         let dec = (self.velocity * 0.9);
-        let fric = if dec < 2. {
-            (dec * 0.7) - 0.2
-        } else {
-            dec
-        };
-        let r = if fric < 1. {
-            0.
-        } else {
-            fric
-        };
+        let fric = if dec < 2. { (dec * 0.7) - 0.2 } else { dec };
+        let r = if fric < 1. { 0. } else { fric };
         self.velocity = r;
     }
 

@@ -7,7 +7,7 @@ pub enum MapTile {
     Fairway,
     Green,
     Flag,
-    Rough
+    Rough,
 }
 
 impl MapTile {
@@ -18,7 +18,7 @@ impl MapTile {
             '=' => MapTile::Fairway,
             '@' => MapTile::Green,
             'F' => MapTile::Flag,
-            _ => MapTile::Rough
+            _ => MapTile::Rough,
         }
     }
 
@@ -37,7 +37,6 @@ impl MapTile {
     pub fn color_pair(self) -> ColorPair {
         ColorPair::new(self.color(), self.bg())
     }
-
 
     pub fn color(self) -> (u8, u8, u8) {
         match self {
