@@ -61,7 +61,9 @@ pub fn render_ui(
         }
     };
     match *turnStage {
-        TurnStage::ClubSelection(club) => {
+        TurnStage::ClubSelection(clubs, current) => {
+            let club = clubs.at(&current);
+            println!("Current club: {:?} = {:?}", &current, club.name);
             ctx.print(
                 Point::new(2, window.height - 3),
                 format!("Club selected: {}", club.name)
@@ -98,8 +100,10 @@ pub fn render_ui(
         }
     }
 
+    let (uiH0, uiH) = (map.height, window.height - map.height);
+    let uiW = window.width;
     DrawBatch::new()
-        .draw_box(Rect::with_size(0, 43, 79, 6), ColorPair::new(WHITE, BLACK))
+        .draw_box(Rect::with_size(0, uiH0, uiW-1, uiH-1), ColorPair::new(WHITE, BLACK))
         .submit(15050)
         .expect("Box error");
     ctx.submit(20220).expect("UI Error!");

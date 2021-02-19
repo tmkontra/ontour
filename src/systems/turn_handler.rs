@@ -6,6 +6,13 @@ pub fn turn_handler(
     mut balls: Query<&mut Ball>,
 ) {
     let updatedStage: TurnStage = match *turnStage {
+        TurnStage::ClubSelection(clubs, current) => {
+            if let Some(VirtualKeyCode::Down)  = *key {
+                TurnStage::ClubSelection(clubs, clubs.next_club(current))
+            } else {
+                TurnStage::ClubSelection(clubs, current)
+            }
+        }
         TurnStage::Aiming(aim, club) => {
             let new_aim = aim.aim(*key);
             TurnStage::Aiming(Aim { degrees: new_aim }, club)

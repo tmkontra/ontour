@@ -40,7 +40,7 @@ pub struct Window {
 }
 
 impl Window {
-    const SCREEN_HEIGHT: u8 = 50;
+    const SCREEN_HEIGHT: u8 = 60;
     const SCREEN_WIDTH: u8 = 80;
 
     pub fn new() -> Self {
@@ -81,7 +81,7 @@ impl Aim {
 #[derive(Copy, Clone, Debug)]
 pub struct Club {
     id: u32,
-    pub name: &'static str
+    pub name: &'static str,
     // loft, speed, accuracy
 }
 
@@ -91,6 +91,26 @@ impl Club {
 
     pub fn default() -> Self {
         Club::DRIVER
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+pub struct ClubSet {
+    clubs: [Club; 2]
+}
+
+
+impl ClubSet {
+    pub fn next_club(&self, selected: usize) -> usize {
+        self.clubs.get(selected + 1).map_or(0, |_| selected + 1)
+    }
+
+    pub fn at(&self, selection: &usize) -> Club {
+        self.clubs[*selection]
+    }
+
+    pub fn default() -> ClubSet {
+        ClubSet { clubs: [Club::DRIVER, Club::PUTTER] }
     }
 }
 
@@ -119,7 +139,7 @@ struct Finished {}
 
 #[derive(Copy, Clone, Debug)]
 pub enum TurnStage {
-    ClubSelection(Club),
+    ClubSelection(ClubSet, usize),
     Aiming(Aim, Club),
     Swinging(Swing, Aim, Club),
     Traveling(Travel),
@@ -128,7 +148,8 @@ pub enum TurnStage {
 
 impl TurnStage {
     pub fn start() -> TurnStage {
-        TurnStage::ClubSelection(Club::default())
+        let set = ClubSet::default();
+        TurnStage::ClubSelection(set, 0)
     }
 
     fn start_swing(aim: Aim, club: Club) -> TurnStage {
@@ -137,8 +158,8 @@ impl TurnStage {
 
     pub fn next(&self) -> TurnStage {
         match self {
-            TurnStage::ClubSelection(club) =>
-                TurnStage::Aiming(Aim::new(), club.clone()),
+            TurnStage::ClubSelection(clubs, club) =>
+                TurnStage::Aiming(Aim::new(), clubs.at(club)),
             TurnStage::Aiming(aim, club) =>
                 TurnStage::start_swing(aim.clone(), club.clone()),
             TurnStage::Swinging(_, _, _) =>
@@ -170,7 +191,7 @@ impl State {
         let mut schedule: bevy::Schedule = State::build_schedule();
 
         let window = Window::new();
-        let mut map = Map::load_map(window.width, window.height, "src/map1.txt").unwrap();
+        let mut map = Map::load_map(window.width - 15, window.height - 10, "src/map1.txt").unwrap();
         let ball = Ball::new(&map.tee);
 
 
@@ -201,7 +222,17 @@ impl GameState for State {
 }
 
 fn main() -> BError {
-    let context = BTermBuilder::simple80x50()
+    let context = BTermBuilder::default()
+        .with_dimensions(80, 60)
+        .with_font(
+            "terminal8x8.png".to_string(),
+            8,
+            8
+        )
+        .with_simple_console(
+            80, 60,
+            "terminal8x8.png".to_string()
+        )
         .with_title("ON TOUR")
         .with_fps_cap(30.0)
         .build()?;
