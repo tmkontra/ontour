@@ -14,6 +14,7 @@ mod prelude {
     pub use crate::Aim;
     pub use crate::AppState;
     pub use crate::Club;
+    pub use crate::FrameTime;
     pub use crate::Swing;
     pub use crate::TurnStage;
     pub use crate::Window;
@@ -25,6 +26,8 @@ mod prelude {
     pub use legion::systems::CommandBuffer;
     pub use legion::systems::*;
     pub use legion::world::SubWorld;
+
+    pub use itertools_num;
 }
 
 struct State {
@@ -37,6 +40,24 @@ struct State {
 pub struct Window {
     pub height: u8,
     pub width: u8,
+}
+
+pub struct FrameTime {
+    pub t_ms: f32,
+}
+
+impl FrameTime {
+    pub fn new() -> Self {
+        FrameTime { t_ms: 0. }
+    }
+
+    pub fn of(ms: f32) -> Self {
+        FrameTime { t_ms: ms }
+    }
+
+    pub fn seconds(&self) -> f32 {
+        self.t_ms / 1000.
+    }
 }
 
 impl Window {
@@ -82,17 +103,22 @@ impl Aim {
 pub struct Club {
     id: u32,
     pub name: &'static str,
-    // loft, speed, accuracy
+    pub loft_deg: f32,
+    pub max_initial_velocity: f32,
 }
 
 impl Club {
     const DRIVER: Club = Club {
         id: 1,
         name: "Driver",
+        loft_deg: 12.,
+        max_initial_velocity: 73.76,
     };
     const PUTTER: Club = Club {
         id: 2,
         name: "Putter",
+        loft_deg: 0.,
+        max_initial_velocity: 1.,
     };
 
     pub fn default() -> Self {
@@ -132,22 +158,99 @@ impl ClubSet {
 #[derive(Copy, Clone, Debug)]
 pub enum Swing {
     Start,
-    Power(f32, f32),
-    Accuracy(f32, f32, f32),
+    Power(f32),
+    Accuracy(f32, f32),
 }
 
-impl Swing {
-    pub fn direction(&self) -> &f32 {
-        match self {
-            Swing::Start => &0.,
-            Swing::Power(deg, _) => deg,
-            Swing::Accuracy(deg, _, _) => deg,
-        }
-    }
-}
+impl Swing {}
 
 #[derive(Copy, Clone, Debug)]
-pub struct Travel {}
+pub struct Travel {
+    pub direction: f32,
+    initial_velocity: f32,
+    fx: f32,
+    fy: f32,
+    velocity_x: f32,
+    velocity_y: f32,
+    ax: f32,
+    ay: f32,
+    sy: f32,
+    lift_mag: f32,
+    t_elapsed: f32,
+}
+
+/** TODO: implement ground travel after carry **/
+impl Travel {
+    const g: f32 = -9.81;
+    const CD: f32 = 0.2;
+    const RPM: f32 = 3275.;
+    const rho: f32 = 1.225;
+    const area: f32 = 0.00138;
+    const sf: f32 = -0.00026;
+    const lf: f32 = 0.285;
+    const mass: f32 = 0.045;
+    const meters_per_tile: f32 = 8.33333;
+
+    fn drag(v: f32) -> f32 {
+        -0.5 * Travel::rho * (v.powf(2.)) * Travel::CD * Travel::area
+    }
+
+    fn meters_to_tile_distance(meters: f32) -> f32 {
+        meters / Travel::meters_per_tile
+    }
+
+    pub fn new(power: &f32, aim: &Aim, club: &Club) -> Self {
+        let lift_mag: f32 = Travel::lf * (1. - (Travel::sf * Travel::RPM).exp());
+        let theta_rad = (club.loft_deg).to_radians();
+        let fx = theta_rad.cos();
+        let fy = theta_rad.sin();
+        let vi = *power / 100. * club.max_initial_velocity;
+        let vx = vi * fx;
+        let vy = vi * fy;
+        let ax = Travel::drag(vx) / Travel::mass;
+        let ay = (Travel::drag(vy) / Travel::mass) + Travel::g;
+        Travel {
+            direction: aim.degrees,
+            initial_velocity: vi,
+            fx,
+            fy,
+            velocity_x: vx,
+            velocity_y: vy,
+            ax,
+            ay,
+            sy: 0.,
+            lift_mag,
+            t_elapsed: 0.,
+        }
+    }
+
+    pub fn finished(&self) -> bool {
+        self.sy < 0.
+    }
+
+    pub fn tile_distance(&self, dt: f32) -> f32 {
+        let meters = self.velocity_x * dt + 0.5 * self.ax * dt.powf(2.);
+        Travel::meters_to_tile_distance(meters)
+    }
+
+    pub fn tick(&mut self, dt: f32) {
+        let sy: f32 = self.sy + self.velocity_y * dt + (0.5 * self.ay * dt.powf(2.));
+        let vx = self.velocity_x + self.ax * dt;
+        let vy = self.velocity_y + self.ay * dt;
+        let theta_i = (vy / vx).atan();
+        let lx = self.lift_mag * theta_i.sin();
+        let ly = self.lift_mag * theta_i.cos();
+        let ax = Travel::drag(vx) / Travel::mass + (lx / Travel::mass);
+        let ay = Travel::drag(vy) / Travel::mass + Travel::g + (ly / Travel::mass);
+        self.sy = sy;
+        println!("Ball at height: {:?}", sy);
+        self.velocity_x = vx;
+        self.velocity_y = vy;
+        self.ax = ax;
+        self.ay = ay;
+        self.t_elapsed += dt;
+    }
+}
 
 #[derive(Copy, Clone, Debug)]
 struct Finished {}
@@ -175,7 +278,10 @@ impl TurnStage {
         match self {
             TurnStage::ClubSelection(clubs, club) => TurnStage::Aiming(Aim::new(), clubs.at(club)),
             TurnStage::Aiming(aim, club) => TurnStage::start_swing(aim.clone(), club.clone()),
-            TurnStage::Swinging(_, _, _) => TurnStage::Traveling(Travel {}),
+            TurnStage::Swinging(swing, aim, club) => match swing {
+                Swing::Accuracy(pow, acc) => TurnStage::Traveling(Travel::new(pow, aim, club)),
+                _ => panic!("Cannot transition from swing to travel yet!"),
+            },
             TurnStage::Traveling(_) => TurnStage::Finished,
             TurnStage::Finished => TurnStage::start(),
         }
@@ -204,6 +310,7 @@ impl State {
         let mut map = Map::load_map(window.width - 15, window.height - 10, "src/map1.txt").unwrap();
         let ball = Ball::new(&map.tee);
 
+        resources.insert(FrameTime::new());
         resources.insert(bevy::State::new(AppState::Menu));
         resources.insert(map);
         resources.insert(TurnStage::start());
@@ -224,6 +331,7 @@ impl State {
 impl GameState for State {
     fn tick(&mut self, ctx: &mut BTerm) {
         ctx.cls();
+        self.resources.insert(FrameTime::of(ctx.frame_time_ms));
         self.resources.insert(ctx.key);
         self.schedule.run(&mut self.world, &mut self.resources);
         render_draw_buffer(ctx).expect("Render error");

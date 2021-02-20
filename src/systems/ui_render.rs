@@ -9,13 +9,13 @@ pub fn render_ui(
 ) {
     let mut ctx = DrawBatch::new();
 
-    let mut render_swing = |ball: &Ball, swing: Swing| match swing {
+    let mut render_swing = |ball: &Ball, swing: Swing, direction: &f32| match swing {
         Swing::Start => {
             ctx.print(
                 Point::new(2, window.height - 3),
                 "[Start] Aim, Press Space to Start Swing!",
             );
-            let coord = crosshair_coord(ball.tile_position(), swing.direction());
+            let coord = crosshair_coord(ball.tile_position(), direction);
             if map.in_bounds(coord) {
                 let bg = map.bg(coord);
                 ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
@@ -24,12 +24,12 @@ pub fn render_ui(
                 ctx.set(arr, ColorPair::new(RED, BLACK), 30);
             }
         }
-        Swing::Power(deg, pow) => {
+        Swing::Power(pow) => {
             ctx.print(
                 Point::new(2, window.height - 3),
                 "[Power] Aim, Press Space to Start Swing!",
             );
-            let coord = crosshair_coord(ball.tile_position(), swing.direction());
+            let coord = crosshair_coord(ball.tile_position(), direction);
             if map.in_bounds(coord) {
                 let bg = map.bg(coord);
                 ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
@@ -45,12 +45,12 @@ pub fn render_ui(
                 ColorPair::new(RED, BLACK),
             );
         }
-        Swing::Accuracy(_, _, _) => {
+        Swing::Accuracy(_, _) => {
             ctx.print(
                 Point::new(2, window.height - 3),
                 "[Acc] Aim, Press Space to Start Swing!",
             );
-            let coord = crosshair_coord(ball.tile_position(), swing.direction());
+            let coord = crosshair_coord(ball.tile_position(), direction);
             if map.in_bounds(coord) {
                 let bg = map.bg(coord);
                 ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
@@ -82,16 +82,16 @@ pub fn render_ui(
             }
             ctx.print(Point::new(2, window.height - 3), "Aiming");
         }
-        TurnStage::Swinging(swing, _, _) => {
+        TurnStage::Swinging(swing, aim, _) => {
             for ball in balls.iter() {
-                render_swing(ball, swing.clone());
+                render_swing(ball, swing.clone(), &aim.degrees);
             }
         }
-        TurnStage::Traveling(_) => {
+        TurnStage::Traveling(travel) => {
             for ball in balls.iter() {
                 ctx.print(
                     Point::new(2, window.height - 3),
-                    format!("Ball is Traveling {}", ball.velocity),
+                    format!("Ball is Traveling vi {}", travel.initial_velocity),
                 );
             }
         }

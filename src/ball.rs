@@ -4,9 +4,6 @@ use crate::prelude::*;
 pub struct Ball {
     x: f32,
     y: f32,
-    pub velocity: f32,
-    pub direction: f32,
-    frame_time: f32,
 }
 
 impl Ball {
@@ -14,9 +11,6 @@ impl Ball {
         Self {
             x: position.x as f32,
             y: position.y as f32,
-            velocity: 0.,
-            direction: 0.,
-            frame_time: 0.,
         }
     }
 
@@ -24,36 +18,11 @@ impl Ball {
         Point::new(self.x as i32, self.y as i32)
     }
 
-    fn decel(&mut self) {
-        let dec = (self.velocity * 0.9);
-        let fric = if dec < 2. { (dec * 0.7) - 0.2 } else { dec };
-        let r = if fric < 1. { 0. } else { fric };
-        self.velocity = r;
-    }
-
-    fn mv(&mut self, dx: f32, dy: f32) {
+    pub fn mv(&mut self, deg: f32, dist: f32) {
+        let rads = (deg + 90.).to_radians();
+        let dx = rads.cos() * dist;
+        let dy = -1. * rads.sin() * dist;
         self.x += dx;
         self.y += dy;
-    }
-
-    fn motion(&mut self) {
-        println!("dir: {:?}", self.direction);
-        println!("dird: {:?}", self.direction + 90.);
-        let rads = (self.direction + 90.).to_radians();
-        let dx = rads.cos();
-        let dy = -1. * rads.sin();
-        println!("{:?}, {:?}", dx, dy);
-        self.mv(dx, dy);
-    }
-
-    pub fn stopped(&self) -> bool {
-        self.velocity <= 0.
-    }
-
-    pub fn tick(&mut self) {
-        if self.velocity > 0. {
-            self.motion();
-            self.decel();
-        }
     }
 }
