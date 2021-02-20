@@ -7,10 +7,10 @@ pub fn turn_handler(
 ) {
     let updatedStage: TurnStage = match *turnStage {
         TurnStage::ClubSelection(clubs, current) => {
-            if let Some(VirtualKeyCode::Down) = *key {
-                TurnStage::ClubSelection(clubs, clubs.next_club(current))
-            } else {
-                TurnStage::ClubSelection(clubs, current)
+            match *key {
+                Some(VirtualKeyCode::Down) => TurnStage::ClubSelection(clubs, clubs.next_club(current)),
+                Some(VirtualKeyCode::Up) => TurnStage::ClubSelection(clubs, clubs.previous_club(current)),
+                _ => TurnStage::ClubSelection(clubs, current)
             }
         }
         TurnStage::Aiming(aim, club) => {

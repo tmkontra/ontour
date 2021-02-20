@@ -106,6 +106,14 @@ pub struct ClubSet {
 }
 
 impl ClubSet {
+    pub fn previous_club(&self, selected: usize) -> usize {
+        if selected == 0 {
+            self.clubs.len() - 1
+        } else {
+            selected - 1
+        }
+    }
+
     pub fn next_club(&self, selected: usize) -> usize {
         self.clubs.get(selected + 1).map_or(0, |_| selected + 1)
     }
