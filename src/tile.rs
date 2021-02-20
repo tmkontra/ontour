@@ -8,6 +8,7 @@ pub enum MapTile {
     Green,
     Flag,
     Rough,
+    DeepRough,
 }
 
 impl MapTile {
@@ -18,7 +19,7 @@ impl MapTile {
             '=' => MapTile::Fairway,
             '@' => MapTile::Green,
             'F' => MapTile::Flag,
-            _ => MapTile::Rough,
+            _ => MapTile::DeepRough,
         }
     }
 
@@ -30,6 +31,7 @@ impl MapTile {
             MapTile::Green => '█',
             MapTile::Flag => 'F',
             MapTile::Rough => '░',
+            MapTile::DeepRough => '░',
         };
         to_cp437(c)
     }
@@ -46,6 +48,7 @@ impl MapTile {
             MapTile::Green => GREEN,
             MapTile::Flag => RED,
             MapTile::Rough => DARKGREEN,
+            MapTile::DeepRough => DARKOLIVEGREEN,
         }
     }
 
@@ -54,6 +57,7 @@ impl MapTile {
             MapTile::Tee => DARKGREEN,
             MapTile::Flag => LIGHTGREEN,
             MapTile::Rough => BLACK,
+            MapTile::DeepRough => BLACK,
             _ => self.color(),
         }
     }

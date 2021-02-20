@@ -13,9 +13,9 @@ mod prelude {
     pub use crate::tile::*;
     pub use crate::Aim;
     pub use crate::AppState;
+    pub use crate::Club;
     pub use crate::Swing;
     pub use crate::TurnStage;
-    pub use crate::Club;
     pub use crate::Window;
     pub use bracket_lib::prelude::*;
 
@@ -86,8 +86,14 @@ pub struct Club {
 }
 
 impl Club {
-    const DRIVER: Club = Club { id: 1, name: "Driver" };
-    const PUTTER: Club = Club { id: 2, name: "Putter" };
+    const DRIVER: Club = Club {
+        id: 1,
+        name: "Driver",
+    };
+    const PUTTER: Club = Club {
+        id: 2,
+        name: "Putter",
+    };
 
     pub fn default() -> Self {
         Club::DRIVER
@@ -96,9 +102,8 @@ impl Club {
 
 #[derive(Copy, Clone, Debug)]
 pub struct ClubSet {
-    clubs: [Club; 2]
+    clubs: [Club; 2],
 }
-
 
 impl ClubSet {
     pub fn next_club(&self, selected: usize) -> usize {
@@ -110,7 +115,9 @@ impl ClubSet {
     }
 
     pub fn default() -> ClubSet {
-        ClubSet { clubs: [Club::DRIVER, Club::PUTTER] }
+        ClubSet {
+            clubs: [Club::DRIVER, Club::PUTTER],
+        }
     }
 }
 
@@ -158,16 +165,11 @@ impl TurnStage {
 
     pub fn next(&self) -> TurnStage {
         match self {
-            TurnStage::ClubSelection(clubs, club) =>
-                TurnStage::Aiming(Aim::new(), clubs.at(club)),
-            TurnStage::Aiming(aim, club) =>
-                TurnStage::start_swing(aim.clone(), club.clone()),
-            TurnStage::Swinging(_, _, _) =>
-                TurnStage::Traveling(Travel {}),
-            TurnStage::Traveling(_) =>
-                TurnStage::Finished,
-            TurnStage::Finished =>
-                TurnStage::start(),
+            TurnStage::ClubSelection(clubs, club) => TurnStage::Aiming(Aim::new(), clubs.at(club)),
+            TurnStage::Aiming(aim, club) => TurnStage::start_swing(aim.clone(), club.clone()),
+            TurnStage::Swinging(_, _, _) => TurnStage::Traveling(Travel {}),
+            TurnStage::Traveling(_) => TurnStage::Finished,
+            TurnStage::Finished => TurnStage::start(),
         }
     }
 }
@@ -193,7 +195,6 @@ impl State {
         let window = Window::new();
         let mut map = Map::load_map(window.width - 15, window.height - 10, "src/map1.txt").unwrap();
         let ball = Ball::new(&map.tee);
-
 
         resources.insert(bevy::State::new(AppState::Menu));
         resources.insert(map);
@@ -224,15 +225,8 @@ impl GameState for State {
 fn main() -> BError {
     let context = BTermBuilder::default()
         .with_dimensions(80, 60)
-        .with_font(
-            "terminal8x8.png".to_string(),
-            8,
-            8
-        )
-        .with_simple_console(
-            80, 60,
-            "terminal8x8.png".to_string()
-        )
+        .with_font("terminal8x8.png".to_string(), 8, 8)
+        .with_simple_console(80, 60, "terminal8x8.png".to_string())
         .with_title("ON TOUR")
         .with_fps_cap(30.0)
         .build()?;

@@ -53,13 +53,39 @@ impl Map {
                 buf[n] = tile;
             }
         }
-        Some(Self {
+        let mut map = Self {
             width,
             height,
-            points: buf,
+            points: buf.clone(),
             tee: tee?,
             flag: flag?,
-        })
+        };
+        let mut fairway_adjacency = vec![0 as usize; height as usize * width as usize];
+        for (i, point) in map.points.iter().enumerate() {
+            if let MapTile::DeepRough = point {
+                let y = i as i32 / map.width as i32;
+                let x = i as i32 % map.width as i32;
+                let deep_rad = 8;
+                let min_x = (x - deep_rad).max(0);
+                let min_y = (y - deep_rad).max(0);
+                let max_x = (x + deep_rad).min(width as i32 - 1);
+                let max_y = (y + deep_rad).min(height as i32 - 1);
+                for ix in (min_x..max_x) {
+                    for iy in (min_y..max_y) {
+                        if let MapTile::Fairway = &map.tile_at(ix as u8, iy as u8) {
+                            fairway_adjacency[i] += 1;
+                        }
+                    }
+                }
+            }
+        }
+        for (i, near_fairway) in fairway_adjacency.iter().enumerate() {
+            if *near_fairway > 3 {
+                buf[i] = MapTile::Rough;
+            }
+        }
+        map.points = buf;
+        Some(map)
     }
 
     pub fn intersection(&self, p1: Point, p2: Point) -> Point {

@@ -7,7 +7,7 @@ pub fn turn_handler(
 ) {
     let updatedStage: TurnStage = match *turnStage {
         TurnStage::ClubSelection(clubs, current) => {
-            if let Some(VirtualKeyCode::Down)  = *key {
+            if let Some(VirtualKeyCode::Down) = *key {
                 TurnStage::ClubSelection(clubs, clubs.next_club(current))
             } else {
                 TurnStage::ClubSelection(clubs, current)
@@ -29,8 +29,16 @@ pub fn turn_handler(
     };
     let newStage = match (updatedStage, *key) {
         (TurnStage::Swinging(swing, aim, club), Some(VirtualKeyCode::Space)) => match swing {
-            Swing::Start => Some(TurnStage::Swinging(Swing::Power(aim.degrees, 0.), aim, club)),
-            Swing::Power(deg, pow) => Some(TurnStage::Swinging(Swing::Accuracy(aim.degrees, pow, 1.0), aim, club)),
+            Swing::Start => Some(TurnStage::Swinging(
+                Swing::Power(aim.degrees, 0.),
+                aim,
+                club,
+            )),
+            Swing::Power(deg, pow) => Some(TurnStage::Swinging(
+                Swing::Accuracy(aim.degrees, pow, 1.0),
+                aim,
+                club,
+            )),
             Swing::Accuracy(deg, pow, acc) => {
                 for mut ball in balls.iter_mut() {
                     ball.direction = deg;

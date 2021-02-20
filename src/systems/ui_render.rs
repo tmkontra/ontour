@@ -5,7 +5,7 @@ pub fn render_ui(
     map: Res<Map>,
     key: Res<Option<VirtualKeyCode>>,
     balls: Query<&Ball>,
-    window: Res<Window>
+    window: Res<Window>,
 ) {
     let mut ctx = DrawBatch::new();
 
@@ -66,7 +66,7 @@ pub fn render_ui(
             println!("Current club: {:?} = {:?}", &current, club.name);
             ctx.print(
                 Point::new(2, window.height - 3),
-                format!("Club selected: {}", club.name)
+                format!("Club selected: {}", club.name),
             );
         }
         TurnStage::Aiming(Aim { degrees }, _) => {
@@ -100,10 +100,13 @@ pub fn render_ui(
         }
     }
 
-    let (uiH0, uiH) = (map.height, window.height - map.height);
-    let uiW = window.width;
+    let (uiH0, uiH) = (map.height, window.height - 1 - map.height);
+    let uiW = window.width - 1;
     DrawBatch::new()
-        .draw_box(Rect::with_size(0, uiH0, uiW-1, uiH-1), ColorPair::new(WHITE, BLACK))
+        .draw_box(
+            Rect::with_size(0, uiH0, uiW, uiH),
+            ColorPair::new(WHITE, BLACK),
+        )
         .submit(15050)
         .expect("Box error");
     ctx.submit(20220).expect("UI Error!");
