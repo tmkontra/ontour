@@ -295,19 +295,39 @@ pub struct Camera {
     max_x: i32,
     min_y: i32,
     max_y: i32,
+    map_x: i32,
+    map_y: i32,
     display_width: i32,
     display_height: i32,
 }
 
 impl Camera {
-    pub fn new(position: Point, display_width: i32, display_height: i32) -> Self {
+    pub fn new(position: Point, map_x: i32, map_y: i32, display_width: i32, display_height: i32) -> Self {
+        let y = if map_y - position.y < display_height / 2 {
+            let dy = (display_height / 2) - (map_y - position.y);
+            position.y - dy
+        } else if position.y < display_height / 2 {
+            display_height / 2
+        } else {
+            position.y
+        };
+        let x = if map_x - position.x < display_width / 2 {
+            let dx = (display_width / 2) - (map_x - position.x);
+            position.x - dx
+        } else if position.x < display_width / 2 {
+            display_width / 2
+        } else {
+            position.x
+        };
         Self {
             display_width,
             display_height,
-            min_x: position.x - display_width / 2,
-            max_x: position.x + display_width / 2,
-            min_y: position.y - display_height / 2,
-            max_y: position.y + display_height / 2,
+            map_x,
+            map_y,
+            min_x: x - display_width / 2,
+            max_x: x + display_width / 2,
+            min_y: y - display_height / 2,
+            max_y: y + display_height / 2,
         }
     }
 
@@ -328,10 +348,26 @@ impl Camera {
     }
 
     pub fn update(&mut self, position: Point) {
-        self.min_x = position.x - self.display_width / 2;
-        self.max_x = position.x + self.display_width / 2;
-        self.min_y = position.y - self.display_height / 2;
-        self.max_y = position.y + self.display_height / 2;
+        let y = if self.map_y - position.y < self.display_height / 2 {
+            let dy = (self.display_height / 2) - (self.map_y - position.y);
+            position.y - dy
+        } else if position.y < self.display_height / 2 {
+            self.display_height / 2
+        } else {
+            position.y
+        };
+        let x = if self.map_x - position.x < self.display_width / 2 {
+            let dx = (self.display_width / 2) - (self.map_x - position.x);
+            position.x - dx
+        } else if position.x < self.display_width / 2 {
+            self.display_width / 2
+        } else {
+            position.x
+        };
+        self.min_x = x - self.display_width / 2;
+        self.max_x = x + self.display_width / 2;
+        self.min_y = y - self.display_height / 2;
+        self.max_y = y + self.display_height / 2;
     }
 
     pub fn render_coordinate(&self, position: Point) -> Point {
@@ -362,6 +398,8 @@ impl State {
         let ball = Ball::new(&map.tee);
         let cam = Camera::new(
             ball.tile_position(),
+            map.width as i32,
+            map.height as i32,
             window.width as i32 - 15,
             window.height as i32 - 10,
         );
