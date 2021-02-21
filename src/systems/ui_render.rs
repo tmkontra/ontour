@@ -3,6 +3,7 @@ use crate::prelude::*;
 pub fn render_ui(
     turnStage: Res<TurnStage>,
     map: Res<Map>,
+    camera: Res<Camera>,
     key: Res<Option<VirtualKeyCode>>,
     balls: Query<&Ball>,
     window: Res<Window>,
@@ -18,7 +19,11 @@ pub fn render_ui(
             let coord = crosshair_coord(ball.tile_position(), direction);
             if map.in_bounds(coord) {
                 let bg = map.bg(coord);
-                ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
+                ctx.set(
+                    camera.render_coordinate(coord),
+                    ColorPair::new(WHITE, bg),
+                    9,
+                );
             } else {
                 let arr = map.intersection(ball.tile_position(), coord);
                 ctx.set(arr, ColorPair::new(RED, BLACK), 30);
@@ -32,7 +37,11 @@ pub fn render_ui(
             let coord = crosshair_coord(ball.tile_position(), direction);
             if map.in_bounds(coord) {
                 let bg = map.bg(coord);
-                ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
+                ctx.set(
+                    camera.render_coordinate(coord),
+                    ColorPair::new(WHITE, bg),
+                    9,
+                );
             } else {
                 let arr = map.intersection(ball.tile_position(), coord);
                 ctx.set(arr, ColorPair::new(RED, BLACK), 30);
@@ -53,7 +62,11 @@ pub fn render_ui(
             let coord = crosshair_coord(ball.tile_position(), direction);
             if map.in_bounds(coord) {
                 let bg = map.bg(coord);
-                ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
+                ctx.set(
+                    camera.render_coordinate(coord),
+                    ColorPair::new(WHITE, bg),
+                    9,
+                );
             } else {
                 let arr = map.intersection(ball.tile_position(), coord);
                 ctx.set(arr, ColorPair::new(RED, BLACK), 30);
@@ -74,7 +87,11 @@ pub fn render_ui(
                 let coord = crosshair_coord(ball.tile_position(), &degrees);
                 if map.in_bounds(coord) {
                     let bg = map.bg(coord);
-                    ctx.set(Point::new(coord.x, coord.y), ColorPair::new(WHITE, bg), 9);
+                    ctx.set(
+                        camera.render_coordinate(coord),
+                        ColorPair::new(WHITE, bg),
+                        9,
+                    );
                 } else {
                     let arr = map.intersection(ball.tile_position(), coord);
                     ctx.set(arr, ColorPair::new(RED, BLACK), 30);
@@ -100,14 +117,18 @@ pub fn render_ui(
         }
     }
 
-    let (uiH0, uiH) = (map.height, window.height - 1 - map.height);
+    let (uiH0, uiH2) = (camera.height() - 1, window.height as i32 - 1);
     let uiW = window.width - 1;
     DrawBatch::new()
         .draw_box(
-            Rect::with_size(0, uiH0, uiW, uiH),
+            Rect::with_exact(0, uiH0, uiW as i32, uiH2),
             ColorPair::new(WHITE, BLACK),
         )
-        .submit(15050)
+        .draw_box(
+            Rect::with_exact(0, 0, camera.width() - 1, camera.height() - 1),
+            ColorPair::new(WHITE, BLACK),
+        )
+        .submit(1010)
         .expect("Box error");
     ctx.submit(20220).expect("UI Error!");
 }

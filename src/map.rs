@@ -22,15 +22,17 @@ impl Map {
         }
     }
 
-    pub fn load_map(width: u8, height: u8, filename: &str) -> Option<Self> {
+    pub fn load_map(filename: &str) -> Option<Self> {
         let f: File = File::open(filename).unwrap();
         let l: BufReader<File> = BufReader::new(f);
-        let mut buf = vec![MapTile::Rough; height as usize * width as usize];
         let mut tee = None;
         let mut flag = None;
-        for (y, line) in l.lines().take(height as usize).enumerate() {
-            let ln = line.unwrap();
-            for (x, c) in ln.chars().take(width as usize).enumerate() {
+        let lines: Vec<String> = l.lines().map(|l| l.unwrap()).collect::<Vec<String>>();
+        let width: u8 = lines.iter().take(1).next().unwrap().chars().count() as u8;
+        let height: u8 = lines.len() as u8;
+        let mut buf = vec![MapTile::Rough; height as usize * width as usize];
+        for (y, line) in lines.iter().enumerate() {
+            for (x, c) in line.chars().take(width as usize).enumerate() {
                 let tile = MapTile::from_char(&c);
                 match tile {
                     MapTile::Tee => {

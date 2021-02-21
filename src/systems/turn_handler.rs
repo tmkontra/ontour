@@ -3,6 +3,7 @@ use crate::prelude::*;
 pub fn turn_handler(
     dt: Res<FrameTime>,
     key: Res<Option<VirtualKeyCode>>,
+    mut camera: ResMut<Camera>,
     mut turnStage: ResMut<TurnStage>,
     mut balls: Query<&mut Ball>,
 ) {
@@ -27,9 +28,11 @@ pub fn turn_handler(
             let dx = travel.tile_distance(s);
             println!("Frame advances {:?} ms", dt.t_ms);
             println!("Ball moves: {:?}", dx);
-            balls
-                .iter_mut()
-                .for_each(|mut b| b.mv(travel.direction, dx));
+            balls.iter_mut().for_each(|mut b| {
+                b.mv(travel.direction, dx);
+                camera.update(b.tile_position());
+            });
+
             travel.tick(s);
             TurnStage::Traveling(travel)
         }

@@ -1,5 +1,6 @@
 use crate::prelude::*;
 use bevy_ecs::{IntoSystem, Stage, WorldBuilder};
+use std::ops::Range;
 
 mod ball;
 mod map;
@@ -13,6 +14,7 @@ mod prelude {
     pub use crate::tile::*;
     pub use crate::Aim;
     pub use crate::AppState;
+    pub use crate::Camera;
     pub use crate::Club;
     pub use crate::FrameTime;
     pub use crate::Swing;
@@ -288,6 +290,55 @@ impl TurnStage {
     }
 }
 
+pub struct Camera {
+    min_x: i32,
+    max_x: i32,
+    min_y: i32,
+    max_y: i32,
+    display_width: i32,
+    display_height: i32,
+}
+
+impl Camera {
+    pub fn new(position: Point, display_width: i32, display_height: i32) -> Self {
+        Self {
+            display_width,
+            display_height,
+            min_x: position.x - display_width / 2,
+            max_x: position.x + display_width / 2,
+            min_y: position.y - display_height / 2,
+            max_y: position.y + display_height / 2,
+        }
+    }
+
+    pub fn width(&self) -> i32 {
+        self.max_x - self.min_x
+    }
+
+    pub fn height(&self) -> i32 {
+        self.max_y - self.min_y
+    }
+
+    pub fn y_iter(&self) -> Range<i32> {
+        self.min_y..self.max_y - 2
+    }
+
+    pub fn x_iter(&self) -> Range<i32> {
+        self.min_x..self.max_x - 2
+    }
+
+    pub fn update(&mut self, position: Point) {
+        self.min_x = position.x - self.display_width / 2;
+        self.max_x = position.x + self.display_width / 2;
+        self.min_y = position.y - self.display_height / 2;
+        self.max_y = position.y + self.display_height / 2;
+    }
+
+    pub fn render_coordinate(&self, position: Point) -> Point {
+        Point::new(position.x - self.min_x + 1, position.y - self.min_y + 1)
+    }
+}
+
 impl State {
     fn build_schedule() -> bevy::Schedule {
         let mut schedule: bevy::Schedule = Default::default();
@@ -307,9 +358,15 @@ impl State {
         let mut schedule: bevy::Schedule = State::build_schedule();
 
         let window = Window::new();
-        let mut map = Map::load_map(window.width - 15, window.height - 10, "src/map1.txt").unwrap();
+        let mut map = Map::load_map("src/map1.txt").unwrap();
         let ball = Ball::new(&map.tee);
+        let cam = Camera::new(
+            ball.tile_position(),
+            window.width as i32 - 15,
+            window.height as i32 - 10,
+        );
 
+        resources.insert(cam);
         resources.insert(FrameTime::new());
         resources.insert(bevy::State::new(AppState::Menu));
         resources.insert(map);
