@@ -46,6 +46,7 @@ impl State {
         stateStage.on_state_update(AppState::Playing, turn_handler::turn_handler.system());
         stateStage.on_state_update(AppState::Playing, ball_render::ball_render.system());
         stateStage.on_state_update(AppState::Playing, ui_render::render_ui.system());
+        stateStage.on_state_update(AppState::Playing, hole_handler::hole_handler.system());
         schedule.add_stage("main", stateStage);
         schedule
     }
@@ -71,6 +72,7 @@ impl State {
         resources.insert(bevy::State::new(AppState::Menu));
         resources.insert(map);
         resources.insert(TurnStage::start());
+        resources.insert(HoleState::new());
         resources.insert(window);
         world.spawn((ball,));
 

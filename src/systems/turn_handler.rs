@@ -6,6 +6,7 @@ pub fn turn_handler(
     mut camera: ResMut<Camera>,
     mut turnStage: ResMut<TurnStage>,
     mut balls: Query<&mut Ball>,
+    mut hole_state: ResMut<HoleState>,
 ) {
     let updatedStage: TurnStage = match *turnStage {
         TurnStage::ClubSelection(clubs, current) => match *key {
@@ -32,7 +33,6 @@ pub fn turn_handler(
                 b.mv(travel.direction, dx);
                 camera.update(b.tile_position());
             });
-
             travel.tick(s);
             TurnStage::Traveling(travel)
         }
@@ -42,7 +42,10 @@ pub fn turn_handler(
         (TurnStage::Swinging(swing, aim, club), Some(VirtualKeyCode::Space)) => match swing {
             Swing::Start => Some(TurnStage::Swinging(Swing::Power(0.), aim, club)),
             Swing::Power(pow) => Some(TurnStage::Swinging(Swing::Accuracy(pow, 1.0), aim, club)),
-            Swing::Accuracy(pow, acc) => Some(turnStage.next()),
+            Swing::Accuracy(pow, acc) => {
+                hole_state.increment();
+                Some(TurnStage::Traveling(Travel::new(&pow, &aim, &club)))
+            }
         },
         (TurnStage::Traveling(mut travel), _) => {
             if travel.finished() {

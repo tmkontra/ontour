@@ -7,6 +7,7 @@ pub fn render_ui(
     key: Res<Option<VirtualKeyCode>>,
     balls: Query<&Ball>,
     window: Res<Window>,
+    hole_state: Res<HoleState>,
 ) {
     let mut ctx = DrawBatch::new();
 
@@ -73,6 +74,11 @@ pub fn render_ui(
             }
         }
     };
+    let instr = match *hole_state {
+        HoleState::Start => "Start The Hole!".to_string(),
+        HoleState::Stroke(strokes) => format!("Strokes: {}", strokes),
+        HoleState::Holed => "Hole finished!".to_string(),
+    };
     match *turnStage {
         TurnStage::ClubSelection(clubs, current) => {
             let club = clubs.at(&current);
@@ -125,6 +131,11 @@ pub fn render_ui(
             Rect::with_exact(0, 0, camera.width() - 1, camera.height() - 1),
             ColorPair::new(WHITE, BLACK),
         )
+        .draw_box(
+            Rect::with_exact(camera.width(), 0, uiW as i32, camera.height() - 1),
+            ColorPair::new(WHITE, BLACK),
+        )
+        .print(Point::new(camera.width() + 1, 2), instr)
         .submit(1010)
         .expect("Box error");
     ctx.submit(20220).expect("UI Error!");
