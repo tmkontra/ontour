@@ -1,10 +1,10 @@
 use crate::prelude::*;
 
 pub fn render_ui(
-    turnStage: Res<TurnStage>,
+    turn_stage: Res<TurnStage>,
     hole: Res<Hole>,
     camera: Res<Camera>,
-    key: Res<Option<VirtualKeyCode>>,
+    _key: Res<Option<VirtualKeyCode>>,
     balls: Query<&Ball>,
     window: Res<Window>,
     hole_state: Res<HoleState>,
@@ -76,11 +76,11 @@ pub fn render_ui(
         }
     };
     let instr = match *hole_state {
-        HoleState::Start => "Start The Hole!".to_string(),
+        HoleState::TeeOff => "Start The Hole!".to_string(),
         HoleState::Stroke(strokes) => format!("Strokes: {}", strokes),
         HoleState::Holed => "Hole finished!".to_string(),
     };
-    match *turnStage {
+    match *turn_stage {
         TurnStage::ClubSelection(clubs, current) => {
             let club = clubs.at(&current);
             println!("Current club: {:?} = {:?}", &current, club.name);
@@ -111,8 +111,8 @@ pub fn render_ui(
                 render_swing(ball, swing.clone(), &aim.degrees);
             }
         }
-        TurnStage::Traveling(travel) => {
-            for ball in balls.iter() {
+        TurnStage::Traveling(_travel) => {
+            for _ball in balls.iter() {
                 ctx.print(Point::new(2, window.height - 3), "Traveling!");
             }
         }
@@ -121,11 +121,11 @@ pub fn render_ui(
         }
     }
 
-    let (uiH0, uiH2) = (camera.height() - 1, window.height as i32 - 1);
-    let uiW = window.width - 1;
+    let (ui_h0, ui_h2) = (camera.height() - 1, window.height as i32 - 1);
+    let ui_w = window.width - 1;
     DrawBatch::new()
         .draw_box(
-            Rect::with_exact(0, uiH0, uiW as i32, uiH2),
+            Rect::with_exact(0, ui_h0, ui_w as i32, ui_h2),
             ColorPair::new(WHITE, BLACK),
         )
         .draw_box(
@@ -133,7 +133,7 @@ pub fn render_ui(
             ColorPair::new(WHITE, BLACK),
         )
         .draw_box(
-            Rect::with_exact(camera.width(), 0, uiW as i32, camera.height() - 1),
+            Rect::with_exact(camera.width(), 0, ui_w as i32, camera.height() - 1),
             ColorPair::new(WHITE, BLACK),
         )
         .print(Point::new(camera.width() + 1, 2), instr)

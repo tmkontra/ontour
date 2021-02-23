@@ -1,8 +1,5 @@
 use crate::prelude::*;
-use bevy_ecs::{IntoSystem, Stage, WorldBuilder};
-use std::iter::{FlatMap, Repeat, Zip};
-use std::ops::Range;
-use std::slice::Iter;
+use bevy_ecs::{IntoSystem, Stage};
 
 mod model;
 mod systems;
@@ -40,14 +37,19 @@ pub enum AppState {
 impl State {
     fn build_schedule() -> bevy::Schedule {
         let mut schedule: bevy::Schedule = Default::default();
-        let mut stateStage = StateStage::<AppState>::default();
-        stateStage.on_state_update(AppState::Menu, menu_system::menu.system());
-        stateStage.on_state_update(AppState::Playing, map_render::map_render.system());
-        stateStage.on_state_update(AppState::Playing, hole_handler::hole_handler.system().chain(hole_handler::hole_transition.system()));
-        stateStage.on_state_update(AppState::Playing, turn_handler::turn_handler.system());
-        stateStage.on_state_update(AppState::Playing, ball_render::ball_render.system());
-        stateStage.on_state_update(AppState::Playing, ui_render::render_ui.system());
-        schedule.add_stage("main", stateStage);
+        let mut state_stage = StateStage::<AppState>::default();
+        state_stage.on_state_update(AppState::Menu, menu_system::menu.system());
+        state_stage.on_state_update(AppState::Playing, map_render::map_render.system());
+        state_stage.on_state_update(
+            AppState::Playing,
+            hole_handler::hole_handler
+                .system()
+                .chain(hole_handler::hole_transition.system()),
+        );
+        state_stage.on_state_update(AppState::Playing, turn_handler::turn_handler.system());
+        state_stage.on_state_update(AppState::Playing, ball_render::ball_render.system());
+        state_stage.on_state_update(AppState::Playing, ui_render::render_ui.system());
+        schedule.add_stage("main", state_stage);
         schedule
     }
 
@@ -59,7 +61,7 @@ impl State {
         let window = Window::new();
         let mut course = Course::default();
         let hole = course.next().unwrap();
-        let mut map = &hole.map;
+        let map = &hole.map;
         let ball = Ball::new(&map.tee);
         let cam = Camera::new(
             ball.tile_position(),

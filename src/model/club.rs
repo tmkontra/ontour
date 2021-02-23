@@ -19,10 +19,6 @@ impl Club {
         loft_deg: 0.,
         max_initial_velocity: 1.,
     };
-
-    pub fn default() -> Self {
-        Club::DRIVER
-    }
 }
 
 #[derive(Copy, Clone, Debug)]

@@ -53,34 +53,34 @@ pub struct Travel {
 
 /** TODO: implement ground travel after carry **/
 impl Travel {
-    const g: f32 = -9.81;
-    const CD: f32 = 0.2;
+    const GRAVITY: f32 = -9.81;
+    const DIMPLING: f32 = 0.2;
     const RPM: f32 = 3275.;
-    const rho: f32 = 1.225;
-    const area: f32 = 0.00138;
-    const sf: f32 = -0.00026;
-    const lf: f32 = 0.285;
-    const mass: f32 = 0.045;
-    const meters_per_tile: f32 = 8.33333;
+    const RHO: f32 = 1.225;
+    const AREA: f32 = 0.00138;
+    const SPIN_FACTOR: f32 = -0.00026;
+    const LIFT_FACTOR: f32 = 0.285;
+    const MASS: f32 = 0.045;
+    const METERS_PER_TILE: f32 = 8.33333;
 
     fn drag(v: f32) -> f32 {
-        -0.5 * Travel::rho * (v.powf(2.)) * Travel::CD * Travel::area
+        -0.5 * Travel::RHO * (v.powf(2.)) * Travel::DIMPLING * Travel::AREA
     }
 
     fn meters_to_tile_distance(meters: f32) -> f32 {
-        meters / Travel::meters_per_tile
+        meters / Travel::METERS_PER_TILE
     }
 
     pub fn new(power: &f32, aim: &Aim, club: &Club) -> Self {
-        let lift_mag: f32 = Travel::lf * (1. - (Travel::sf * Travel::RPM).exp());
+        let lift_mag: f32 = Travel::LIFT_FACTOR * (1. - (Travel::SPIN_FACTOR * Travel::RPM).exp());
         let theta_rad = (club.loft_deg).to_radians();
         let fx = theta_rad.cos();
         let fy = theta_rad.sin();
         let vi = *power / 100. * club.max_initial_velocity;
         let vx = vi * fx;
         let vy = vi * fy;
-        let ax = Travel::drag(vx) / Travel::mass;
-        let ay = (Travel::drag(vy) / Travel::mass) + Travel::g;
+        let ax = Travel::drag(vx) / Travel::MASS;
+        let ay = (Travel::drag(vy) / Travel::MASS) + Travel::GRAVITY;
         Travel {
             direction: aim.degrees,
             initial_velocity: vi,
@@ -112,8 +112,8 @@ impl Travel {
         let theta_i = (vy / vx).atan();
         let lx = self.lift_mag * theta_i.sin();
         let ly = self.lift_mag * theta_i.cos();
-        let ax = Travel::drag(vx) / Travel::mass + (lx / Travel::mass);
-        let ay = Travel::drag(vy) / Travel::mass + Travel::g + (ly / Travel::mass);
+        let ax = Travel::drag(vx) / Travel::MASS + (lx / Travel::MASS);
+        let ay = Travel::drag(vy) / Travel::MASS + Travel::GRAVITY + (ly / Travel::MASS);
         self.sy = sy;
         println!("Ball at height: {:?}", sy);
         self.velocity_x = vx;
@@ -151,8 +151,8 @@ impl TurnStage {
             TurnStage::ClubSelection(clubs, club) => TurnStage::Aiming(Aim::new(), clubs.at(club)),
             TurnStage::Aiming(aim, club) => TurnStage::start_swing(aim.clone(), club.clone()),
             TurnStage::Swinging(swing, aim, club) => match swing {
-                Swing::Accuracy(pow, acc) => TurnStage::Traveling(Travel::new(pow, aim, club)),
-                accuracy => TurnStage::Swinging(swing.clone(), aim.clone(), club.clone()),
+                Swing::Accuracy(pow, _acc) => TurnStage::Traveling(Travel::new(pow, aim, club)),
+                _accuracy => TurnStage::Swinging(swing.clone(), aim.clone(), club.clone()),
             },
             TurnStage::Traveling(_) => TurnStage::Finished,
             TurnStage::Finished => TurnStage::start(),

@@ -4,11 +4,11 @@ pub fn turn_handler(
     dt: Res<FrameTime>,
     key: Res<Option<VirtualKeyCode>>,
     mut camera: ResMut<Camera>,
-    mut turnStage: ResMut<TurnStage>,
+    mut turn_stage: ResMut<TurnStage>,
     mut balls: Query<&mut Ball>,
     mut hole_state: ResMut<HoleState>,
 ) {
-    let updatedStage: TurnStage = match *turnStage {
+    let updated_stage: TurnStage = match *turn_stage {
         TurnStage::ClubSelection(clubs, current) => match *key {
             Some(VirtualKeyCode::Down) => TurnStage::ClubSelection(clubs, clubs.next_club(current)),
             Some(VirtualKeyCode::Up) => {
@@ -38,18 +38,18 @@ pub fn turn_handler(
         }
         stage => stage,
     };
-    let newStage = match (updatedStage, *key) {
+    let new_stage = match (updated_stage, *key) {
         (TurnStage::Swinging(swing, aim, club), Some(VirtualKeyCode::Space)) => match swing {
             Swing::Start => Some(TurnStage::Swinging(Swing::Power(0.), aim, club)),
             Swing::Power(pow) => Some(TurnStage::Swinging(Swing::Accuracy(pow, 1.0), aim, club)),
-            Swing::Accuracy(pow, acc) => {
+            Swing::Accuracy(pow, _acc) => {
                 hole_state.increment();
                 Some(TurnStage::Traveling(Travel::new(&pow, &aim, &club)))
             }
         },
-        (TurnStage::Traveling(mut travel), _) => {
+        (TurnStage::Traveling(travel), _) => {
             if travel.finished() {
-                Some(turnStage.next())
+                Some(turn_stage.next())
             } else {
                 None
             }
@@ -57,9 +57,9 @@ pub fn turn_handler(
         (stage, Some(VirtualKeyCode::Space)) => Some(stage.next()),
         _ => None,
     };
-    match newStage {
-        None => *turnStage = updatedStage,
-        Some(next) => *turnStage = next,
+    match new_stage {
+        None => *turn_stage = updated_stage,
+        Some(next) => *turn_stage = next,
     }
 }
 

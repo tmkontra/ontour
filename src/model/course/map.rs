@@ -12,16 +12,6 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn new(width: u8, height: u8) -> Self {
-        Self {
-            width,
-            height,
-            points: Vec::<MapTile>::new(),
-            tee: Point::zero(),
-            flag: Point::zero(),
-        }
-    }
-
     pub fn load_map(filename: &str) -> Option<Self> {
         let p = std::env::current_dir();
         println!("Path: {:?}", p);

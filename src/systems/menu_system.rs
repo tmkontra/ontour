@@ -8,7 +8,11 @@ pub fn menu(key: Res<Option<VirtualKeyCode>>, mut state: ResMut<State<AppState>>
         .expect("Box error");
     match *key {
         Some(VirtualKeyCode::D) => {
-            state.set_next(AppState::Playing);
+            if let Ok(_) = state.set_next(AppState::Playing) {
+                ()
+            } else {
+                panic!("Could not start game!")
+            }
         }
         _ => {}
     };

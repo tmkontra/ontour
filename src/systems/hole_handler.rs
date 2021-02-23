@@ -1,12 +1,8 @@
 use crate::prelude::*;
 
-pub fn hole_handler(
-    hole: Res<Hole>,
-    balls: Query<&Ball>,
-    hole_state: Res<HoleState>,
-) -> HoleState {
+pub fn hole_handler(hole: Res<Hole>, balls: Query<&Ball>, hole_state: Res<HoleState>) -> HoleState {
     match *hole_state {
-        HoleState::Start => HoleState::startHole(),
+        HoleState::TeeOff => HoleState::start_hole(),
         HoleState::Stroke(strokes) => {
             if let Some(_) = balls.iter().find(|b| {
                 let ball_at = b.tile_position();
@@ -17,7 +13,7 @@ pub fn hole_handler(
                 HoleState::Stroke(strokes)
             }
         }
-        HoleState::Holed => HoleState::Holed
+        HoleState::Holed => HoleState::Holed,
     }
 }
 
@@ -26,7 +22,7 @@ pub fn hole_transition(
     commands: &mut Commands,
     mut course: ResMut<Course>,
     mut balls: Query<&mut Ball>,
-    window: Res<Window>
+    window: Res<Window>,
 ) {
     let next_state = match &hole_state {
         HoleState::Holed => {
@@ -44,13 +40,13 @@ pub fn hole_transition(
                     commands.insert_resource(cam);
                 });
                 commands.insert_resource(next_hole);
-                HoleState::Start
+                HoleState::TeeOff
             } else {
                 // TODO: score card
                 panic!("Course finished!")
             }
         }
-        state => *state
+        state => *state,
     };
     commands.insert_resource(next_state);
 }
