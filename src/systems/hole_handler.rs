@@ -1,6 +1,11 @@
 use crate::prelude::*;
 
-pub fn hole_handler(map: Res<Map>, balls: Query<&Ball>, mut hole_state: ResMut<HoleState>) {
+pub fn hole_handler(
+    map: Res<Map>,
+    balls: Query<&Ball>,
+    commands: &mut Commands,
+    mut hole_state: ResMut<HoleState>,
+) {
     let new_state = match *hole_state {
         HoleState::Start => HoleState::startHole(),
         HoleState::Stroke(strokes) => {
@@ -13,7 +18,11 @@ pub fn hole_handler(map: Res<Map>, balls: Query<&Ball>, mut hole_state: ResMut<H
                 HoleState::Stroke(strokes)
             }
         }
-        HoleState::Holed => HoleState::startHole(),
+        HoleState::Holed => {
+            let new_hole = Map::load_map("map2.txt").unwrap();
+            commands.insert_resource(new_hole);
+            HoleState::startHole()
+        }
     };
     *hole_state = new_state
 }

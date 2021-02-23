@@ -43,10 +43,10 @@ impl State {
         let mut stateStage = StateStage::<AppState>::default();
         stateStage.on_state_update(AppState::Menu, menu_system::menu.system());
         stateStage.on_state_update(AppState::Playing, map_render::map_render.system());
+        stateStage.on_state_update(AppState::Playing, hole_handler::hole_handler.system());
         stateStage.on_state_update(AppState::Playing, turn_handler::turn_handler.system());
         stateStage.on_state_update(AppState::Playing, ball_render::ball_render.system());
         stateStage.on_state_update(AppState::Playing, ui_render::render_ui.system());
-        stateStage.on_state_update(AppState::Playing, hole_handler::hole_handler.system());
         schedule.add_stage("main", stateStage);
         schedule
     }
