@@ -1,7 +1,8 @@
 use crate::prelude::*;
 
-pub fn ball_render(balls: Query<&Ball>, map: Res<Map>, camera: Res<Camera>) {
+pub fn ball_render(balls: Query<&Ball>, hole: Res<Hole>, camera: Res<Camera>) {
     let mut draw = DrawBatch::new();
+    let map = &hole.map;
     draw.target(0);
     balls.iter().for_each(|ball: &Ball| {
         let pos = ball.tile_position();

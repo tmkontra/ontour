@@ -58,7 +58,8 @@ impl State {
 
         let window = Window::new();
         let mut course = Course::default();
-        let mut map = course.next().unwrap();
+        let hole = course.next().unwrap();
+        let mut map = &hole.map;
         let ball = Ball::new(&map.tee);
         let cam = Camera::new(
             ball.tile_position(),
@@ -72,7 +73,7 @@ impl State {
         resources.insert(FrameTime::new());
         resources.insert(bevy::State::new(AppState::Menu));
         resources.insert(course);
-        resources.insert(map);
+        resources.insert(hole);
         resources.insert(TurnStage::start());
         resources.insert(HoleState::new());
         resources.insert(window);

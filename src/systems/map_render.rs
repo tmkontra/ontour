@@ -1,8 +1,9 @@
 use crate::prelude::*;
 
-pub fn map_render(map: Res<Map>, camera: Res<Camera>) {
+pub fn map_render(hole: Res<Hole>, camera: Res<Camera>) {
     let mut draw = DrawBatch::new();
     let OOB: ColorPair = ColorPair::new(WHITE, GRAY0);
+    let map = &hole.map;
     draw.target(0);
     for point in &camera.map_coords {
         if map.in_bounds(point) {

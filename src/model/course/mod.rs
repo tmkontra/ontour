@@ -6,37 +6,33 @@ use std::fs::File;
 use std::thread::current;
 use std::collections::LinkedList;
 
-struct HoleFile {
-    path: PathBuf
-}
-
-impl HoleFile {
-    pub fn new(path: &str) -> Self {
-        Self {
-            path: Path::new(path).to_owned()
-        }
-    }
+pub struct Hole {
+    pub number: usize,
+    pub map: Map
 }
 
 pub struct Course {
-    current: usize,
-    hole_paths: Vec<HoleFile>,
-    holes: LinkedList<Map>
+    holes: LinkedList<Hole>
 }
 
 impl Course {
     pub fn default() -> Self {
-        let holes = vec![HoleFile::new("src/map1.txt"), HoleFile::new("src/map2.txt")];
-        let mut ll = LinkedList::new();
-        ll.extend(holes.iter().map(|h| Map::load_map(h.path.to_str().unwrap()).unwrap()));
-        Self {
-            current: 0,
-            hole_paths: holes,
-            holes: ll
-        }
+        let hole_files = vec!["src/map1.txt", "src/map2.txt"];
+        let mut holes: LinkedList<Hole> = LinkedList::new();
+        holes.extend(
+            hole_files.iter()
+                .map(|p| {
+                    Map::load_map(p).unwrap()
+                })
+                .enumerate()
+                .map(|(i, map)| {
+                    Hole { number: i + 1, map }
+                })
+        );
+        Self { holes }
     }
 
-    pub fn next(&mut self) -> Option<Map> {
+    pub fn next(&mut self) -> Option<Hole> {
         self.holes.pop_front()
     }
 }

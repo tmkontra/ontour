@@ -2,7 +2,7 @@ use crate::prelude::*;
 
 pub fn render_ui(
     turnStage: Res<TurnStage>,
-    map: Res<Map>,
+    hole: Res<Hole>,
     camera: Res<Camera>,
     key: Res<Option<VirtualKeyCode>>,
     balls: Query<&Ball>,
@@ -10,6 +10,7 @@ pub fn render_ui(
     hole_state: Res<HoleState>,
 ) {
     let mut ctx = DrawBatch::new();
+    let map = &hole.map;
 
     let mut render_swing = |ball: &Ball, swing: Swing, direction: &f32| match swing {
         Swing::Start => {
