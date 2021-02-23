@@ -16,8 +16,8 @@ pub fn turn_handler(
             _ => TurnStage::ClubSelection(clubs, current),
         },
         TurnStage::Aiming(aim, club) => {
-            let new_aim = aim.aim(*key);
-            TurnStage::Aiming(Aim { degrees: new_aim }, club)
+            let new_aim = aim.adjust(*key);
+            TurnStage::Aiming(new_aim, club)
         }
         TurnStage::Swinging(swing, aim, club) => {
             let new_swing = handle_swing(swing.clone()).unwrap_or(swing);

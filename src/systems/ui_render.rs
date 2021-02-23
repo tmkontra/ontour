@@ -106,10 +106,7 @@ pub fn render_ui(
         }
         TurnStage::Traveling(travel) => {
             for ball in balls.iter() {
-                ctx.print(
-                    Point::new(2, window.height - 3),
-                    format!("Ball is Traveling vi {}", travel.initial_velocity),
-                );
+                ctx.print(Point::new(2, window.height - 3), "Traveling!");
             }
         }
         TurnStage::Finished => {
