@@ -3,9 +3,9 @@ pub mod camera;
 pub mod club;
 mod frame_time;
 pub mod interface;
-pub mod map;
 pub mod state;
 pub mod tile;
+pub mod course;
 mod util;
 
 use util::*;
@@ -18,3 +18,4 @@ pub use interface::*;
 pub use map::Map;
 pub use state::*;
 pub use tile::MapTile;
+pub use course::*;

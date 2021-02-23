@@ -25,4 +25,9 @@ impl Ball {
         self.x += dx;
         self.y += dy;
     }
+
+    pub fn move_to(&mut self, destination: &Point) {
+        self.x = destination.x as f32;
+        self.y = destination.y as f32;
+    }
 }

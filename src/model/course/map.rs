@@ -23,6 +23,8 @@ impl Map {
     }
 
     pub fn load_map(filename: &str) -> Option<Self> {
+        let p = std::env::current_dir();
+        println!("Path: {:?}", p);
         let f: File = File::open(filename).unwrap();
         let l: BufReader<File> = BufReader::new(f);
         let mut tee = None;
@@ -136,7 +138,6 @@ impl Map {
     }
 
     pub fn in_bounds(&self, point: &Point) -> bool {
-        println!("{:?} in {:?}", point, (self.width, self.height));
         point.x >= 0 && point.x < self.width as i32 && point.y >= 0 && point.y < self.height as i32
     }
 

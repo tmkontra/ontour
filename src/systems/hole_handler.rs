@@ -3,10 +3,9 @@ use crate::prelude::*;
 pub fn hole_handler(
     map: Res<Map>,
     balls: Query<&Ball>,
-    commands: &mut Commands,
-    mut hole_state: ResMut<HoleState>,
-) {
-    let new_state = match *hole_state {
+    hole_state: Res<HoleState>,
+) -> HoleState {
+    match *hole_state {
         HoleState::Start => HoleState::startHole(),
         HoleState::Stroke(strokes) => {
             if let Some(_) = balls.iter().find(|b| {
@@ -18,11 +17,30 @@ pub fn hole_handler(
                 HoleState::Stroke(strokes)
             }
         }
+        HoleState::Holed => HoleState::Holed
+    }
+}
+
+pub fn hole_transition(
+    In(hole_state): In<HoleState>,
+    commands: &mut Commands,
+    mut course: ResMut<Course>,
+    mut balls: Query<&mut Ball>
+) {
+    let next_state = match &hole_state {
         HoleState::Holed => {
-            let new_hole = Map::load_map("map2.txt").unwrap();
-            commands.insert_resource(new_hole);
-            HoleState::startHole()
+            if let Some(next_map) = course.next() {
+                balls.iter_mut().for_each(|mut b| {
+                    b.move_to(&next_map.tee)
+                });
+                commands.insert_resource(next_map);
+                HoleState::Start
+            } else {
+                // TODO: score card
+                panic!("Course finished!")
+            }
         }
+        state => *state
     };
-    *hole_state = new_state
+    commands.insert_resource(next_state);
 }

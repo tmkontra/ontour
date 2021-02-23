@@ -43,7 +43,7 @@ impl State {
         let mut stateStage = StateStage::<AppState>::default();
         stateStage.on_state_update(AppState::Menu, menu_system::menu.system());
         stateStage.on_state_update(AppState::Playing, map_render::map_render.system());
-        stateStage.on_state_update(AppState::Playing, hole_handler::hole_handler.system());
+        stateStage.on_state_update(AppState::Playing, hole_handler::hole_handler.system().chain(hole_handler::hole_transition.system()));
         stateStage.on_state_update(AppState::Playing, turn_handler::turn_handler.system());
         stateStage.on_state_update(AppState::Playing, ball_render::ball_render.system());
         stateStage.on_state_update(AppState::Playing, ui_render::render_ui.system());
@@ -57,7 +57,8 @@ impl State {
         let mut schedule: bevy::Schedule = State::build_schedule();
 
         let window = Window::new();
-        let mut map = Map::load_map("src/map1.txt").unwrap();
+        let mut course = Course::default();
+        let mut map = course.next().unwrap();
         let ball = Ball::new(&map.tee);
         let cam = Camera::new(
             ball.tile_position(),
@@ -70,6 +71,7 @@ impl State {
         resources.insert(cam);
         resources.insert(FrameTime::new());
         resources.insert(bevy::State::new(AppState::Menu));
+        resources.insert(course);
         resources.insert(map);
         resources.insert(TurnStage::start());
         resources.insert(HoleState::new());
