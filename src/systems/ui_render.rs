@@ -17,10 +17,10 @@ pub fn render_ui(
                 "[Start] Aim, Press Space to Start Swing!",
             );
             let coord = crosshair_coord(ball.tile_position(), direction);
-            if map.in_bounds(coord) {
-                let bg = map.bg(coord);
+            if map.in_bounds(&coord) {
+                let bg = map.bg(&coord);
                 ctx.set(
-                    camera.render_coordinate(coord),
+                    camera.render_coordinate(&coord),
                     ColorPair::new(WHITE, bg),
                     9,
                 );
@@ -35,10 +35,10 @@ pub fn render_ui(
                 "[Power] Aim, Press Space to Start Swing!",
             );
             let coord = crosshair_coord(ball.tile_position(), direction);
-            if map.in_bounds(coord) {
-                let bg = map.bg(coord);
+            if map.in_bounds(&coord) {
+                let bg = map.bg(&coord);
                 ctx.set(
-                    camera.render_coordinate(coord),
+                    camera.render_coordinate(&coord),
                     ColorPair::new(WHITE, bg),
                     9,
                 );
@@ -60,10 +60,10 @@ pub fn render_ui(
                 "[Acc] Aim, Press Space to Start Swing!",
             );
             let coord = crosshair_coord(ball.tile_position(), direction);
-            if map.in_bounds(coord) {
-                let bg = map.bg(coord);
+            if map.in_bounds(&coord) {
+                let bg = map.bg(&coord);
                 ctx.set(
-                    camera.render_coordinate(coord),
+                    camera.render_coordinate(&coord),
                     ColorPair::new(WHITE, bg),
                     9,
                 );
@@ -85,10 +85,10 @@ pub fn render_ui(
         TurnStage::Aiming(Aim { degrees }, _) => {
             for ball in balls.iter() {
                 let coord = crosshair_coord(ball.tile_position(), &degrees);
-                if map.in_bounds(coord) {
-                    let bg = map.bg(coord);
+                if map.in_bounds(&coord) {
+                    let bg = map.bg(&coord);
                     ctx.set(
-                        camera.render_coordinate(coord),
+                        camera.render_coordinate(&coord),
                         ColorPair::new(WHITE, bg),
                         9,
                     );

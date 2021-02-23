@@ -879,6 +879,7 @@ version = "0.1.0"
 dependencies = [
  "bevy_ecs",
  "bracket-lib",
+ "itertools 0.10.0",
  "itertools-num",
  "legion",
 ]
@@ -934,6 +935,15 @@ name = "itertools"
 version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "284f18f85651fe11e8a991b2adb42cb078325c996ed026d994719efcfca1d54b"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
+version = "0.10.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "37d572918e350e82412fe766d24b15e6682fb2ed2bbe018280caa810397cb319"
 dependencies = [
  "either",
 ]
@@ -1007,7 +1017,7 @@ dependencies = [
  "derivative",
  "downcast-rs",
  "erased-serde",
- "itertools",
+ "itertools 0.9.0",
  "legion_codegen",
  "parking_lot 0.11.1",
  "paste",

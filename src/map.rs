@@ -72,9 +72,9 @@ impl Map {
                 let min_y = (y - deep_rad).max(0);
                 let max_x = (x + deep_rad).min(width as i32 - 1);
                 let max_y = (y + deep_rad).min(height as i32 - 1);
-                for ix in (min_x..max_x) {
-                    for iy in (min_y..max_y) {
-                        if let MapTile::Fairway = &map.tile_at(ix as u8, iy as u8) {
+                for ix in min_x..max_x {
+                    for iy in min_y..max_y {
+                        if let MapTile::Fairway = &map.tile_at_xy(ix as u8, iy as u8) {
                             fairway_adjacency[i] += 1;
                         }
                     }
@@ -135,17 +135,22 @@ impl Map {
         }
     }
 
-    pub fn in_bounds(&self, point: Point) -> bool {
+    pub fn in_bounds(&self, point: &Point) -> bool {
         println!("{:?} in {:?}", point, (self.width, self.height));
         point.x >= 0 && point.x < self.width as i32 && point.y >= 0 && point.y < self.height as i32
     }
 
-    pub fn tile_at(&self, x: u8, y: u8) -> MapTile {
+    pub fn tile_at(&self, point: &Point) -> MapTile {
+        let n = ((point.y * self.width as i32) + point.x as i32) as usize;
+        self.points[n]
+    }
+
+    pub fn tile_at_xy(&self, x: u8, y: u8) -> MapTile {
         let n = ((y as u16 * self.width as u16) + x as u16) as usize;
         self.points[n]
     }
 
-    pub fn bg(&self, position: Point) -> (u8, u8, u8) {
-        self.tile_at(position.x as u8, position.y as u8).bg()
+    pub fn bg(&self, position: &Point) -> (u8, u8, u8) {
+        self.tile_at(position).bg()
     }
 }

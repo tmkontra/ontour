@@ -11,3 +11,4 @@ bracket-lib = { version = "~0.8.1" } #, default-features = false, features = ["c
 legion = "=0.3.1"
 bevy_ecs = "0.4.0"
 itertools-num = "0.1.3"
+itertools = "0.10.0"

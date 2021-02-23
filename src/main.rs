@@ -1,6 +1,8 @@
 use crate::prelude::*;
 use bevy_ecs::{IntoSystem, Stage, WorldBuilder};
+use std::iter::{FlatMap, Repeat, Zip};
 use std::ops::Range;
+use std::slice::Iter;
 
 mod ball;
 mod map;
@@ -29,6 +31,7 @@ mod prelude {
     pub use legion::systems::*;
     pub use legion::world::SubWorld;
 
+    pub use itertools::Itertools;
     pub use itertools_num;
 }
 
@@ -290,19 +293,59 @@ impl TurnStage {
     }
 }
 
+struct Rect {
+    x0: i32,
+    x1: i32,
+    y0: i32,
+    y1: i32,
+}
+
+impl Rect {
+    pub fn new(origin: Point, width: i32, height: i32) -> Self {
+        let x0 = origin.x - width / 2;
+        let x1 = origin.x + width / 2;
+        let y0 = origin.y - height / 2;
+        let y1 = origin.y + height / 2;
+        Self { x0, x1, y0, y1 }
+    }
+
+    pub fn width(&self) -> i32 {
+        self.x1 - self.x0
+    }
+
+    pub fn height(&self) -> i32 {
+        self.y1 - self.y0
+    }
+
+    pub fn coordinates(&self) -> Vec<Point> {
+        (self.y0..self.y1 - 2)
+            .cartesian_product(self.x0..self.x1 - 2)
+            .map(|(y, x)| Point::new(x, y))
+            .collect()
+    }
+
+    pub fn relative_point(&self, position: &Point) -> Point {
+        Point::new(position.x - self.x0 + 1, position.y - self.y0 + 1)
+    }
+}
+
 pub struct Camera {
-    min_x: i32,
-    max_x: i32,
-    min_y: i32,
-    max_y: i32,
+    rect: Rect,
     map_x: i32,
     map_y: i32,
     display_width: i32,
     display_height: i32,
+    map_coords: Vec<Point>,
 }
 
 impl Camera {
-    pub fn new(position: Point, map_x: i32, map_y: i32, display_width: i32, display_height: i32) -> Self {
+    pub fn new(
+        position: Point,
+        map_x: i32,
+        map_y: i32,
+        display_width: i32,
+        display_height: i32,
+    ) -> Self {
         let y = if map_y - position.y < display_height / 2 {
             let dy = (display_height / 2) - (map_y - position.y);
             position.y - dy
@@ -319,32 +362,24 @@ impl Camera {
         } else {
             position.x
         };
+        let rect = Rect::new(Point::new(x, y), display_width, display_height);
+        let map_coords: Vec<Point> = rect.coordinates();
         Self {
             display_width,
             display_height,
+            rect,
             map_x,
             map_y,
-            min_x: x - display_width / 2,
-            max_x: x + display_width / 2,
-            min_y: y - display_height / 2,
-            max_y: y + display_height / 2,
+            map_coords,
         }
     }
 
     pub fn width(&self) -> i32 {
-        self.max_x - self.min_x
+        self.rect.width()
     }
 
     pub fn height(&self) -> i32 {
-        self.max_y - self.min_y
-    }
-
-    pub fn y_iter(&self) -> Range<i32> {
-        self.min_y..self.max_y - 2
-    }
-
-    pub fn x_iter(&self) -> Range<i32> {
-        self.min_x..self.max_x - 2
+        self.rect.height()
     }
 
     pub fn update(&mut self, position: Point) {
@@ -364,14 +399,14 @@ impl Camera {
         } else {
             position.x
         };
-        self.min_x = x - self.display_width / 2;
-        self.max_x = x + self.display_width / 2;
-        self.min_y = y - self.display_height / 2;
-        self.max_y = y + self.display_height / 2;
+        let rect = Rect::new(Point::new(x, y), self.display_width, self.display_height);
+        let map_coords: Vec<Point> = rect.coordinates();
+        self.rect = rect;
+        self.map_coords = map_coords;
     }
 
-    pub fn render_coordinate(&self, position: Point) -> Point {
-        Point::new(position.x - self.min_x + 1, position.y - self.min_y + 1)
+    pub fn render_coordinate(&self, position: &Point) -> Point {
+        self.rect.relative_point(position)
     }
 }
 
